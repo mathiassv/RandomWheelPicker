@@ -6,7 +6,7 @@ services:
     image: random-picker:latest
     container_name: random-picker
     ports:
-      - "8080:80"        # Apache proxies to this machine:8080
+      - "5174:80"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost/"]
