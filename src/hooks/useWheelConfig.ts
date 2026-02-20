@@ -64,16 +64,19 @@ export function useWheelConfig() {
     setConfig({ items: [], sliceOrder: [] })
   }, [])
 
-  const addManyItems = useCallback((names: string[]) => {
+  const addManyItems = useCallback((entries: { name: string; count: number }[]) => {
     setConfig((prev) => {
-      const newItems = names.map((name) => ({
+      const newItems = entries.map(({ name, count }) => ({
         id: generateId(),
         name,
-        count: 1,
+        count: Math.max(1, Math.min(count, 100)),
       }))
       return {
         items: [...prev.items, ...newItems],
-        sliceOrder: [...prev.sliceOrder, ...newItems.map((i) => i.id)],
+        sliceOrder: [
+          ...prev.sliceOrder,
+          ...newItems.flatMap((item) => Array<string>(item.count).fill(item.id)),
+        ],
       }
     })
   }, [])

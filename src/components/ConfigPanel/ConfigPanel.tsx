@@ -8,8 +8,30 @@ import styles from './ConfigPanel.module.css'
 // ── Add Many dialog ───────────────────────────────────────────────────────────
 // Rendered only while open so showModal() fires on mount with no flash.
 
+interface ParsedItem {
+  name: string
+  count: number
+}
+
+/** Parse one line. Supports "Name" (count=1) and "Name,Count" formats.
+ *  Uses the last comma as the delimiter so names containing commas work. */
+function parseLine(line: string): ParsedItem | null {
+  const trimmed = line.trim()
+  if (!trimmed) return null
+  const lastComma = trimmed.lastIndexOf(',')
+  if (lastComma !== -1) {
+    const countStr = trimmed.slice(lastComma + 1).trim()
+    const count = parseInt(countStr, 10)
+    if (!isNaN(count) && count >= 1) {
+      const name = trimmed.slice(0, lastComma).trim()
+      if (name.length > 0) return { name, count }
+    }
+  }
+  return { name: trimmed, count: 1 }
+}
+
 interface AddManyDialogProps {
-  onAdd: (names: string[]) => void
+  onAdd: (items: ParsedItem[]) => void
   onClose: () => void
 }
 
@@ -29,32 +51,36 @@ function AddManyDialog({ onAdd, onClose }: AddManyDialogProps) {
     return () => dialog.removeEventListener('cancel', onCancel)
   }, [onClose])
 
-  const pendingNames = text
+  const pendingItems = text
     .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
+    .map(parseLine)
+    .filter((item): item is ParsedItem => item !== null)
+
+  const totalSlices = pendingItems.reduce((sum, item) => sum + item.count, 0)
 
   const handleAdd = () => {
-    if (pendingNames.length > 0) onAdd(pendingNames)
+    if (pendingItems.length > 0) onAdd(pendingItems)
     onClose()
   }
 
   return (
     <dialog ref={dialogRef} className={styles.dialog} aria-label="Add many items">
       <h3 className={styles.dialogTitle}>Add Many Items</h3>
-      <p className={styles.dialogHint}>One item per line</p>
+      <p className={styles.dialogHint}>One item per line — optionally append a count: Name,Count</p>
       <textarea
         className={styles.dialogTextarea}
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder={'Apple\nBanana\nCherry'}
+        placeholder={'Apple\nBanana,3\nCherry,5'}
         rows={8}
         autoFocus
         aria-label="Items to add, one per line"
       />
       <p className={styles.dialogCount}>
-        {pendingNames.length > 0
-          ? `${pendingNames.length} item${plural(pendingNames.length)} will be added`
+        {pendingItems.length > 0
+          ? totalSlices !== pendingItems.length
+            ? `${pendingItems.length} item${plural(pendingItems.length)}, ${totalSlices} slice${plural(totalSlices)} will be added`
+            : `${pendingItems.length} item${plural(pendingItems.length)} will be added`
           : 'Enter items above'}
       </p>
       <div className={styles.dialogActions}>
@@ -64,9 +90,9 @@ function AddManyDialog({ onAdd, onClose }: AddManyDialogProps) {
         <button
           className={styles.dialogAddBtn}
           onClick={handleAdd}
-          disabled={pendingNames.length === 0}
+          disabled={pendingItems.length === 0}
         >
-          Add {pendingNames.length > 0 ? pendingNames.length : ''} Item{plural(pendingNames.length)}
+          Add {pendingItems.length > 0 ? pendingItems.length : ''} Item{plural(pendingItems.length)}
         </button>
       </div>
     </dialog>
@@ -120,7 +146,7 @@ interface Props {
   stopSpeedMultiplier: number
   removeWinningSlice: boolean
   onAdd: () => void
-  onAddMany: (names: string[]) => void
+  onAddMany: (items: ParsedItem[]) => void
   onUpdate: (id: string, patch: Partial<Omit<WheelItem, 'id'>>) => void
   onRemove: (id: string) => void
   onClear: () => void
