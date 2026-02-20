@@ -85,6 +85,21 @@ export function useWheelConfig() {
     }))
   }, [])
 
+  /** Remove one occurrence of an item from sliceOrder, decrementing its count.
+   *  Removes the item entirely if count reaches 0. */
+  const removeOneSlice = useCallback((id: string) => {
+    setConfig((prev) => {
+      const lastIndex = prev.sliceOrder.lastIndexOf(id)
+      if (lastIndex === -1) return prev
+      const newOrder = [...prev.sliceOrder]
+      newOrder.splice(lastIndex, 1)
+      const newItems = prev.items
+        .map((item) => item.id === id ? { ...item, count: item.count - 1 } : item)
+        .filter((item) => item.count > 0)
+      return { items: newItems, sliceOrder: newOrder }
+    })
+  }, [])
+
   return {
     items: config.items,
     sliceOrder: config.sliceOrder,
@@ -92,6 +107,7 @@ export function useWheelConfig() {
     addManyItems,
     updateItem,
     removeItem,
+    removeOneSlice,
     clearItems,
     randomizeOrder,
   }

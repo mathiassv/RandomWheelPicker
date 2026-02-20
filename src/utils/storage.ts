@@ -107,6 +107,41 @@ export function saveConfig(items: WheelItem[], sliceOrder: string[]): void {
   }
 }
 
+const PANEL_VISIBLE_KEY = 'randomPicker_panelVisible'
+const REMOVE_WINNING_SLICE_KEY = 'randomPicker_removeWinningSlice'
+
+export function loadPanelVisible(): boolean {
+  try {
+    return localStorage.getItem(PANEL_VISIBLE_KEY) !== 'false'
+  } catch {
+    return true
+  }
+}
+
+export function savePanelVisible(visible: boolean): void {
+  try {
+    localStorage.setItem(PANEL_VISIBLE_KEY, String(visible))
+  } catch {
+    // localStorage unavailable — silently ignore
+  }
+}
+
+export function loadRemoveWinningSlice(): boolean {
+  try {
+    return localStorage.getItem(REMOVE_WINNING_SLICE_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+export function saveRemoveWinningSlice(value: boolean): void {
+  try {
+    localStorage.setItem(REMOVE_WINNING_SLICE_KEY, String(value))
+  } catch {
+    // localStorage unavailable — silently ignore
+  }
+}
+
 export function loadTitle(): string {
   try {
     return localStorage.getItem(TITLE_KEY) ?? DEFAULT_TITLE

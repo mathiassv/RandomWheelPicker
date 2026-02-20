@@ -94,13 +94,24 @@ export function drawWheel(
 
   // 2. Draw text labels — radial orientation (along the radius, not tangential)
   const fontSize = Math.max(10, Math.min(18, size * 0.04))
-  ctx.font = `bold ${fontSize}px sans-serif`
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
   // Sit text at 58% radius so it has room to extend toward the outer edge
   const textRadius = radius * 0.58
+  // The text is drawn radially, so its height occupies tangential space.
+  // Available tangential arc at textRadius = sweepAngle × textRadius.
+  // Skip labels entirely when that arc is less than 1.5× the font height —
+  // at that point the text would overlap neighbouring slices anyway.
+  const minArcForText = fontSize * 1.5
+  const labelsVisible = slices.length === 0 || slices[0].sweepAngle * textRadius >= minArcForText
+
+  if (labelsVisible) {
+    ctx.font = `bold ${fontSize}px sans-serif`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+  }
 
   for (const slice of slices) {
+    if (!labelsVisible) break
+
     const midAngle = slice.startAngle + slice.sweepAngle / 2 + currentAngle
     const tx = cx + textRadius * Math.cos(midAngle)
     const ty = cy + textRadius * Math.sin(midAngle)

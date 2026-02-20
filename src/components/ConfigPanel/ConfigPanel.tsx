@@ -118,6 +118,7 @@ interface Props {
   phase: SpinPhase
   speedMultiplier: number
   stopSpeedMultiplier: number
+  removeWinningSlice: boolean
   onAdd: () => void
   onAddMany: (names: string[]) => void
   onUpdate: (id: string, patch: Partial<Omit<WheelItem, 'id'>>) => void
@@ -126,11 +127,13 @@ interface Props {
   onRandomize: () => void
   onSpeedChange: (multiplier: number) => void
   onStopSpeedChange: (multiplier: number) => void
+  onRemoveWinningSliceChange: (value: boolean) => void
 }
 
 export function ConfigPanel({
-  items, sliceOrder, wins, phase, speedMultiplier, stopSpeedMultiplier,
+  items, sliceOrder, wins, phase, speedMultiplier, stopSpeedMultiplier, removeWinningSlice,
   onAdd, onAddMany, onUpdate, onRemove, onClear, onRandomize, onSpeedChange, onStopSpeedChange,
+  onRemoveWinningSliceChange,
 }: Props) {
   const disabled = phase !== 'idle'
   const totalSlices = sliceOrder.length
@@ -203,6 +206,17 @@ export function ConfigPanel({
 
       <SpeedRow label="Spin" value={speedMultiplier} disabled={disabled} onChange={onSpeedChange} />
       <SpeedRow label="Stop" value={stopSpeedMultiplier} disabled={disabled} onChange={onStopSpeedChange} />
+
+      <div className={styles.toggleRow}>
+        <span className={styles.toggleLabel}>Remove winning slice</span>
+        <button
+          role="switch"
+          aria-checked={removeWinningSlice}
+          className={`${styles.toggle} ${removeWinningSlice ? styles.toggleOn : ''}`}
+          onClick={() => onRemoveWinningSliceChange(!removeWinningSlice)}
+          title={removeWinningSlice ? 'Each win removes one slice of the winner' : 'Winning slices are kept'}
+        />
+      </div>
 
       {dialogOpen && createPortal(
         <AddManyDialog onAdd={onAddMany} onClose={closeDialog} />,

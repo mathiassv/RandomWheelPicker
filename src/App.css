@@ -56,7 +56,8 @@ body {
   letter-spacing: -0.01em;
 }
 
-.app-title-edit-btn {
+.app-title-edit-btn,
+.panel-toggle-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -72,9 +73,14 @@ body {
   padding: 0;
 }
 
-.app-title-edit-btn:hover {
+.app-title-edit-btn:hover,
+.panel-toggle-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #94a3b8;
+}
+
+.panel-toggle-btn {
+  margin-left: auto;
 }
 
 .app-title-input {
@@ -110,10 +116,21 @@ body {
   margin: 0 auto;
 }
 
+.app-layout--panel-hidden {
+  grid-template-columns: 1fr;
+}
+
 .wheel-section {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.app-layout--panel-hidden .wheel-section {
+  max-width: min(800px, calc(100vh - 220px));
 }
 
 /* Mobile: single column, wheel on top */

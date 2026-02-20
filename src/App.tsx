@@ -2,7 +2,7 @@ import { useMemo, useCallback, useState, useRef, useEffect } from 'react'
 import { useWheelConfig } from './hooks/useWheelConfig'
 import { useSpinWheel } from './hooks/useSpinWheel'
 import { computeSlices } from './utils/wheel'
-import { loadTitle, saveTitle, DEFAULT_TITLE } from './utils/storage'
+import { loadTitle, saveTitle, DEFAULT_TITLE, loadPanelVisible, savePanelVisible, loadRemoveWinningSlice, saveRemoveWinningSlice } from './utils/storage'
 import { Wheel } from './components/Wheel/Wheel'
 import { SpinButton } from './components/SpinButton/SpinButton'
 import { ConfigPanel } from './components/ConfigPanel/ConfigPanel'
@@ -10,7 +10,7 @@ import { WinnerModal } from './components/WinnerModal/WinnerModal'
 import './App.css'
 
 export default function App() {
-  const { items, sliceOrder, addItem, addManyItems, updateItem, removeItem, clearItems, randomizeOrder } =
+  const { items, sliceOrder, addItem, addManyItems, updateItem, removeItem, removeOneSlice, clearItems, randomizeOrder } =
     useWheelConfig()
 
   // ── Editable title ──────────────────────────────────────────────────────────
@@ -42,10 +42,17 @@ export default function App() {
   }
   const slices = useMemo(() => computeSlices(items, sliceOrder), [items, sliceOrder])
 
+  const [removeWinningSlice, setRemoveWinningSlice] = useState(loadRemoveWinningSlice)
+  useEffect(() => { saveRemoveWinningSlice(removeWinningSlice) }, [removeWinningSlice])
+
   const [wins, setWins] = useState<Record<string, number>>({})
   const recordWin = useCallback((itemId: string) => {
     setWins((prev) => ({ ...prev, [itemId]: (prev[itemId] ?? 0) + 1 }))
-  }, [])
+    if (removeWinningSlice) removeOneSlice(itemId)
+  }, [removeWinningSlice, removeOneSlice])
+
+  const [panelVisible, setPanelVisible] = useState(loadPanelVisible)
+  useEffect(() => { savePanelVisible(panelVisible) }, [panelVisible])
 
   const [speedMultiplier, setSpeedMultiplier] = useState(1)
   const [stopSpeedMultiplier, setStopSpeedMultiplier] = useState(1)
@@ -113,9 +120,29 @@ export default function App() {
             </>
           )}
         </div>
+        <button
+          className="panel-toggle-btn"
+          onClick={() => setPanelVisible((v) => !v)}
+          aria-label={panelVisible ? 'Hide items panel' : 'Show items panel'}
+          title={panelVisible ? 'Hide panel' : 'Show panel'}
+        >
+          {panelVisible ? (
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="0.75" y="0.75" width="13.5" height="13.5" rx="2"/>
+              <line x1="9.75" y1="0.75" x2="9.75" y2="14.25"/>
+              <path d="M11.25 5.25L13 7.5l-1.75 2.25"/>
+            </svg>
+          ) : (
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="0.75" y="0.75" width="13.5" height="13.5" rx="2"/>
+              <line x1="9.75" y1="0.75" x2="9.75" y2="14.25" strokeDasharray="2.5 1.5"/>
+              <path d="M13 5.25L11.25 7.5 13 9.75"/>
+            </svg>
+          )}
+        </button>
       </header>
 
-      <main className="app-layout">
+      <main className={`app-layout${panelVisible ? '' : ' app-layout--panel-hidden'}`}>
         <section className="wheel-section" aria-label="Wheel">
           <Wheel slices={slices} currentAngle={currentAngle} />
           <SpinButton
@@ -126,22 +153,26 @@ export default function App() {
           />
         </section>
 
-        <ConfigPanel
-          items={items}
-          sliceOrder={sliceOrder}
-          wins={wins}
-          phase={phase}
-          speedMultiplier={speedMultiplier}
-          stopSpeedMultiplier={stopSpeedMultiplier}
-          onAdd={addItem}
-          onAddMany={addManyItems}
-          onUpdate={updateItem}
-          onRemove={removeItem}
-          onClear={clearItems}
-          onRandomize={randomizeOrder}
-          onSpeedChange={setSpeedMultiplier}
-          onStopSpeedChange={setStopSpeedMultiplier}
-        />
+        {panelVisible && (
+          <ConfigPanel
+            items={items}
+            sliceOrder={sliceOrder}
+            wins={wins}
+            phase={phase}
+            speedMultiplier={speedMultiplier}
+            stopSpeedMultiplier={stopSpeedMultiplier}
+            removeWinningSlice={removeWinningSlice}
+            onAdd={addItem}
+            onAddMany={addManyItems}
+            onUpdate={updateItem}
+            onRemove={removeItem}
+            onClear={clearItems}
+            onRandomize={randomizeOrder}
+            onSpeedChange={setSpeedMultiplier}
+            onStopSpeedChange={setStopSpeedMultiplier}
+            onRemoveWinningSliceChange={setRemoveWinningSlice}
+          />
+        )}
       </main>
 
       {/* Visually hidden live region — announces the winner to screen readers */}
